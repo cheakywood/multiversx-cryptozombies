@@ -13,13 +13,15 @@ pub struct Zombie<M: ManagedTypeApi> {
 pub trait CryptoZombies {
     #[init]
     fn init(&self) {
-        self.dna_digits().set(16u8);
-        self.zombie_last_index().set(1usize);
+        self.dna_digits().set(16);
+        self.zombie_last_index().set(0);
     }
 
     #[upgrade]
     fn upgrade(&self) {}
 
+    #[only_owner]
+    #[endpoint(createZombie)]
     fn create_zombie(&self, name: ManagedBuffer, dna: u64) {
         self.zombie_last_index().update(|id: &mut usize| {
             self.new_zombie_event(*id, name.clone(), dna);
@@ -31,13 +33,14 @@ pub trait CryptoZombies {
 
     #[view]
     fn generate_random_dna(&self) -> u64 {
-        let mut my_random: RandomnessSource = RandomnessSource::new();
         let dna_digits: u8 = self.dna_digits().get();
-        let max_dna_value: u64 = u64::pow(10u64, dna_digits as u32);
-        return my_random.next_u64_in_range(0u64, max_dna_value);
+        let max_dna_value: u64 = 10u64.pow(dna_digits as u32);
+
+        // Generate a random DNA value within the range
+        return RandomnessSource::new().next_u64_in_range(0, max_dna_value)
     }
 
-    #[endpoint]
+    #[endpoint(createRandomZombie)]
     fn create_random_zombie(&self, name: ManagedBuffer) {
         let dna: u64 = self.generate_random_dna();
         self.create_zombie(name, dna);
@@ -48,7 +51,7 @@ pub trait CryptoZombies {
         &self,
         #[indexed] zombie_id: usize,
         name: ManagedBuffer,
-        #[indexed] dna: u64
+        #[indexed] dna: u64,
     );
 
     #[storage_mapper("dnaDigits")]
