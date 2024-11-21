@@ -1,5 +1,4 @@
 use crate::zombie::Zombie;
-
 multiversx_sc::imports!();
 
 #[multiversx_sc::module]

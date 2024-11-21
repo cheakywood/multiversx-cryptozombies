@@ -7,8 +7,6 @@ pub trait ZombieFactory: storage::StorageModule {
     #[endpoint(createZombie)]
     fn create_zombie(&self, owner: ManagedAddress, name: ManagedBuffer, dna: u64) {
         self.zombie_last_index().update(|id: &mut usize| {
-            self.new_zombie_event(*id, &name, dna);
-
             let new_zombie: Zombie<<Self as ContractBase>::Api> = Zombie {
                 name: name.clone(),
                 dna,
@@ -18,23 +16,20 @@ pub trait ZombieFactory: storage::StorageModule {
             self.zombie_owner(*id).set(owner);
             self.zombies(*id).set(new_zombie);
 
-            *id += 1; // Increment ID after storing the zombie
+            self.new_zombie_event(*id, &name, dna);
+            *id += 1;
         });
     }
 
     #[view]
     fn generate_random_dna(&self) -> u64 {
-        let dna_digits: u8 = self.dna_digits().get();
-        let max_dna_value: u64 = (10u64).pow(dna_digits as u32);
-
-        // Generate a random DNA value within the specified range
-        RandomnessSource::new().next_u64_in_range(0, max_dna_value)
+        let max_dna: u64 = (10u64).pow(self.dna_digits().get() as u32);
+        RandomnessSource::new().next_u64_in_range(0, max_dna)
     }
 
     #[endpoint(createRandomZombie)]
     fn create_random_zombie(&self, name: ManagedBuffer) {
         let caller: ManagedAddress = self.blockchain().get_caller();
-
         require!(self.owned_zombies(&caller).is_empty(), "You already own a zombie");
 
         let random_dna: u64 = self.generate_random_dna();

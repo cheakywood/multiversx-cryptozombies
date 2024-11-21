@@ -1,8 +1,10 @@
-use crate::crypto_kitty_proxy;
-use crate::crypto_kitty_proxy::Kitty;
-use crate::zombie_factory;
-use crate::storage;
-use crate::zombie::Zombie;
+use crate::{
+    crypto_kitties_proxy::Kitty,
+    crypto_kitties_proxy,
+    storage,
+    zombie::Zombie,
+    zombie_factory,
+};
 multiversx_sc::imports!();
 
 #[multiversx_sc::module]
@@ -15,13 +17,10 @@ pub trait ZombieFeeding: storage::StorageModule + zombie_factory::ZombieFactory 
             "Only the owner of the zombie can perform this operation"
         );
         let my_zombie: Zombie<<Self as ContractBase>::Api> = self.zombies(zombie_id).get();
+        let max_dna_value: u64 = (10u64).pow(self.dna_digits().get() as u32);
 
-        let dna_digits: u8 = self.dna_digits().get();
-        let max_dna_value: u64 = u64::pow(10u64, dna_digits as u32);
-
-        let verified_target_dna: u64 = target_dna % max_dna_value;
-        let new_dna: u64 = (my_zombie.dna + verified_target_dna) / 2;
-        let new_name: ManagedBuffer = ManagedBuffer::from("NewName");
+        let new_dna: u64 = (my_zombie.dna + (target_dna % max_dna_value)) / 2;
+        let new_name: ManagedBuffer = ManagedBuffer::from("NewZombie");
         self.create_zombie(caller, new_name, new_dna);
     }
 
@@ -33,8 +32,7 @@ pub trait ZombieFeeding: storage::StorageModule + zombie_factory::ZombieFactory 
     ) {
         match result {
             ManagedAsyncCallResult::Ok(kitty) => {
-                let kitty_dna: u64 = kitty.genes;
-                self.feed_and_multiply(zombie_id, kitty_dna);
+                self.feed_and_multiply(zombie_id, kitty.genes);
             }
             ManagedAsyncCallResult::Err(_) => {}
         }
@@ -43,6 +41,7 @@ pub trait ZombieFeeding: storage::StorageModule + zombie_factory::ZombieFactory 
     #[endpoint]
     fn feed_on_kitty(&self, zombie_id: usize, kitty_id: usize) {
         let crypto_kitties_sc_address: ManagedAddress = self.crypto_kitties_sc_address().get();
+
         self.kitty_proxy(crypto_kitties_sc_address)
             .get_kitty(kitty_id)
             .async_call()
@@ -51,5 +50,5 @@ pub trait ZombieFeeding: storage::StorageModule + zombie_factory::ZombieFactory 
     }
 
     #[proxy]
-    fn kitty_proxy(&self, to: ManagedAddress) -> crypto_kitty_proxy::Proxy<Self::Api>;
+    fn kitty_proxy(&self, to: ManagedAddress) -> crypto_kitties_proxy::Proxy<Self::Api>;
 }

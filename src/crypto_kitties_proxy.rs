@@ -1,4 +1,3 @@
-mod crypto_kitties_proxy{}
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
@@ -17,7 +16,7 @@ pub struct Kitty {
 }
 
 #[multiversx_sc::proxy]
-pub trait CryptoKitties  {
+pub trait CryptoKitties {
     #[endpoint]
     fn get_kitty(&self, id: usize) -> Kitty;
 }
