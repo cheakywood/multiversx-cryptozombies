@@ -15,6 +15,7 @@ pub trait ZombieFactory: storage::StorageModule {
             };
 
             self.owned_zombies(&owner).insert(*id);
+            self.zombie_owner(*id).set(owner);
             self.zombies(*id).set(new_zombie);
 
             *id += 1; // Increment ID after storing the zombie

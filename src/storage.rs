@@ -15,4 +15,10 @@ pub trait StorageModule {
 
     #[storage_mapper("ownedZombies")]
     fn owned_zombies(&self, owner: &ManagedAddress) -> UnorderedSetMapper<usize>;
+
+    #[storage_mapper("zombieOwner")]
+    fn zombie_owner(&self, id: usize) -> SingleValueMapper<ManagedAddress>;
+
+    #[storage_mapper("cryptoKittiesSCAddress")]
+    fn crypto_kitties_sc_address(&self) -> SingleValueMapper<ManagedAddress>;
 }
